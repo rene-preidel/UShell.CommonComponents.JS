@@ -8,21 +8,21 @@ const SettingsDropdown: React.FC<{
   setLayoutMode: (layoutMode: LayoutMode) => void
   setColorMode: (colorMode: ColorMode) => void
   shellSettings: ShellSettings
-}> = ({ setLayoutMode, setColorMode, shellSettings }) => {
-  const [isOpen, setIsOpen] = useState(false)
-
+  isOpen: boolean
+  setIsOpen?: (o: boolean) => void
+}> = ({ setLayoutMode, setColorMode, shellSettings, isOpen, setIsOpen }) => {
   return (
-    <div className=''>
+    <>
       <button
         id='UShell_Settings_Button'
         className='align-middle'
-        onClick={() => setIsOpen((o) => !o)}
+        onClick={() => setIsOpen && setIsOpen(!isOpen)}
       >
-        <CogWheelIcon></CogWheelIcon>
+        <CogWheelIcon size={1.2}></CogWheelIcon>
       </button>
       {isOpen && (
         <Dropdown refId='UShell_Settings_Button' setIsOpen={setIsOpen} rightOffset={1}>
-          <div className='bg-bg1 shadow-lg dark:bg-bg2dark p-3 rounded-md border-2 border-bg5 dark:border-bg7dark'>
+          <div className='bg-bg1 shadow-lg dark:bg-bg2dark p-3 rounded-md border-2 border-bg5 dark:border-bg7dark mt-2'>
             <div className='mb-4'>
               <RadioGroup
                 value={shellSettings.layoutMode}
@@ -62,7 +62,7 @@ const SettingsDropdown: React.FC<{
           </div>
         </Dropdown>
       )}
-    </div>
+    </>
   )
 }
 

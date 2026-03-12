@@ -58,6 +58,7 @@ import { LocalStoreDataSourceManager } from './data/LocalDataSourceManager'
 import MutliPanelLayoutDoc from './demo/MutliPanelLayoutDoc'
 import KanbanBoardDoc from './demo/KanbanBoardDoc'
 import ServiceFactoryDoc from './demo/ServiceFactoryDoc'
+import ArrowUpDownIcon from './_Icons/ArrowUpDownIcon'
 
 const queryClient = new QueryClient()
 const Demo = () => {
@@ -181,15 +182,18 @@ const Demo = () => {
       {
         icon: (
           <button className='align-middle'>
-            <TrashIcon></TrashIcon>
+            <TrashIcon size={1.2}></TrashIcon>
           </button>
+        ),
+        dropdown: (
+          <div className='bg-content dark:bg-contentDark rounded-md p-2'>Hi im a dropdown</div>
         ),
         id: 'hi',
       },
       {
         icon: (
           <button className='align-middle'>
-            <XMarkIcon size={0}></XMarkIcon>
+            <ArrowUpDownIcon size={1.2}></ArrowUpDownIcon>
           </button>
         ),
         id: 'you',

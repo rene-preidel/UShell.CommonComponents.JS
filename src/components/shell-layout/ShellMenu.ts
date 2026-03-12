@@ -13,6 +13,7 @@ export class MenuItem {
 
 export interface TopBarItem {
   icon: ReactElement
+  dropdown?: ReactElement
   command?: (e: any) => void
   id: string
 }
