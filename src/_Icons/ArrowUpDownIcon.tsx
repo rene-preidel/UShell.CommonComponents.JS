@@ -1,9 +1,9 @@
 import React from 'react'
 
-const ArrowUpDownIcon: React.FC<{ className?: string }> = ({ className }) => {
+const ArrowUpDownIcon: React.FC<{ size?: number }> = ({ size = 1.5 }) => {
   return (
     <svg
-      className={'w-4 h-4' + className}
+      style={{ width: `${size}rem`, height: `${size}rem` }}
       aria-hidden='true'
       xmlns='http://www.w3.org/2000/svg'
       fill='currentColor'

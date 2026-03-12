@@ -4,6 +4,7 @@ import RelationForm from './RelationForm'
 import FieldForm from './FieldForm'
 import IndexForm from './IndexForm'
 import { NodeData } from '../NodeData'
+import DropdownSelect from '../../../_Atoms/DropdownSelect'
 
 const EditorProperties: React.FC<{
   nodeData: NodeData | undefined
@@ -20,6 +21,20 @@ const EditorProperties: React.FC<{
   const handleColorChange = (color: string) => {
     if (nodeData) {
       nodeData.color = color
+      onChange()
+    }
+  }
+
+  const handleNamePluralChange = (namePlural: string) => {
+    if (entity) {
+      entity.namePlural = namePlural
+      onChange()
+    }
+  }
+
+  const handlePrimaryKeyIndexChange = (indexName: string) => {
+    if (entity) {
+      entity.primaryKeyIndexName = indexName
       onChange()
     }
   }
@@ -76,9 +91,41 @@ const EditorProperties: React.FC<{
               </div>
             )}
             {activeTab === 'data' && (
-              <div className='flex flex-col gap-2'>
-                <div>Data properties will go here</div>
-                {/* Data properties will go here */}
+              <div className='flex flex-col gap-3'>
+                <div className='flex flex-col gap-2'>
+                  <label className='text-sm font-medium'>Plural Name</label>
+                  <input
+                    type='text'
+                    value={entity?.namePlural || ''}
+                    onChange={(e) => handleNamePluralChange(e.target.value)}
+                    placeholder='Enter plural name'
+                    className='px-3 py-2 rounded border border-contentBorder dark:border-contentBorderDark bg-contentBg dark:bg-contentBgDark text-content dark:text-contentDark'
+                  />
+                </div>
+                <div className='flex flex-col gap-2'>
+                  <label className='text-sm font-medium'>Primary Key Index</label>
+                  <DropdownSelect
+                    initialOption={
+                      entity?.primaryKeyIndexName
+                        ? {
+                            label: entity.primaryKeyIndexName,
+                            value: entity.primaryKeyIndexName,
+                          }
+                        : null
+                    }
+                    options={
+                      entity?.indices?.map((idx) => ({
+                        label: idx.name,
+                        value: idx.name,
+                      })) || []
+                    }
+                    onOptionSet={(option) => {
+                      if (option) {
+                        handlePrimaryKeyIndexChange(option.value)
+                      }
+                    }}
+                  />
+                </div>
               </div>
             )}
           </div>
