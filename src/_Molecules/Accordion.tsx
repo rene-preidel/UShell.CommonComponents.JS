@@ -22,7 +22,14 @@ const Accordion: React.FC<{
   classNameBgItems = '',
   initialOpenIndex,
 }) => {
-  const [openIndices, setOpenIndices] = useState<number[]>([initialOpenIndex || 0])
+  const [openIndices, setOpenIndices] = useState<number[]>(
+    initialOpenIndex
+    ? [initialOpenIndex]
+    : (multipleOpenAllowed
+      ? items.map((_, i) => i)
+      : [0]
+    )
+  )
 
   function toggleOpen(i: number) {
     if (!multipleOpenAllowed) {
@@ -56,11 +63,19 @@ const Accordion: React.FC<{
       {items.map((item, i) => (
         <div className='w-full border-0 border-red-400' key={i}>
           <div
-            className={`flex items-center gap-2 w-full border-b cursor-pointer
+            className={`flex items-center gap-2 w-full cursor-pointer select-none
             border-menuBorder dark:border-menuBorderDark
             ${classNameBgHeader}
-            ${isOpen(i) ? classNameBgHeaderActive : ''}`}
-            onClick={() => toggleOpen(i)}
+            ${isOpen(i) ? classNameBgHeaderActive : ''}
+            ${i === 0
+              ? (isOpen(i) ? ' border-b' : ' border-0')
+              : (isOpen(i) ? ' border-y' : ' border-t')
+            }
+            `}
+            onClick={(e) => {
+              e.preventDefault();
+              toggleOpen(i);
+            }}
           >
             <div
               className={`p-3  ${
@@ -69,7 +84,7 @@ const Accordion: React.FC<{
             >
               <ChevrodnDownIcon></ChevrodnDownIcon>
             </div>
-            <button className=' p-3 '>{item.label}</button>
+            <button type="button" className=' p-3 '>{item.label}</button>
           </div>
           {openIndices.includes(i) && <div className={`${classNameBgItems}`}>{item.content}</div>}
         </div>

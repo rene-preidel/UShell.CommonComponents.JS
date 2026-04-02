@@ -4,6 +4,7 @@ import DropdownSelect from '../../../_Atoms/DropdownSelect'
 const BoolInputField: React.FC<{
   initialValue: any
   currentValue: any
+  isControlled?: boolean
   setCurrentValue: (cv: any) => void
   onValueChange: (newValue: any) => void
   disabled: boolean
@@ -15,8 +16,11 @@ const BoolInputField: React.FC<{
   classNameDropdownHoverBg?: string
   required: boolean
   minWidth?: number
+  placeholder?: string
 }> = ({
   initialValue,
+  currentValue,
+  isControlled = false,
   setCurrentValue,
   onValueChange,
   disabled,
@@ -28,19 +32,20 @@ const BoolInputField: React.FC<{
   classNameDropdownHoverBg,
   required = false,
   minWidth,
+  placeholder,
 }) => {
   const options: { label: string; value: any }[] = [
-    { label: 'Yes', value: 1 },
-    { label: 'No', value: -1 },
+    { label: 'Yes', value: isControlled ? true : 1 },
+    { label: 'No', value: isControlled ? false : -1 },
   ]
-  if (!required) {
-    options.push({ label: 'Unset', value: undefined })
-  }
   return (
     <DropdownSelect
       minWidth={minWidth}
       options={options}
+      value={currentValue}
+      isControlled={isControlled}
       onOptionSet={(o) => {
+        // !isControlled && setCurrentValue(o?.value == undefined ? undefined : o?.value == 1 ? true : false)      
         setCurrentValue(o?.value == undefined ? undefined : o?.value == 1 ? true : false)
         onValueChange(o?.value == undefined ? undefined : o?.value == 1 ? true : false)
       }}
@@ -55,6 +60,8 @@ const BoolInputField: React.FC<{
       classNameDropdownBg={classNameDropdownBg}
       classNameDropdownHoverBg={classNameDropdownHoverBg}
       styleType={styleType}
+      required={required}
+      placeholder={placeholder}
     ></DropdownSelect>
   )
 }

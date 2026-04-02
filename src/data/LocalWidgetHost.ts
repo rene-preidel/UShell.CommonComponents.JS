@@ -13,6 +13,14 @@ export class LocalWidgetHost implements IWidgetHost {
     this.dataSourceManager = dataSourceManager
   }
 
+  getServiceByName<TService extends object>(serviceName: string, tokenSourceUid?: string): TService {
+    throw new Error('Method not implemented.')
+  }
+  
+  createServiceProxy<TService extends object>(serviceUrl: string, tokenSourceUid?: string): TService {
+    throw new Error('Method not implemented.')
+  }
+
   private getLocalStorageIdentifier(usecaseInstanceUid: string): string {
     return `UShell_CommonComponents_${usecaseInstanceUid}`
   }
