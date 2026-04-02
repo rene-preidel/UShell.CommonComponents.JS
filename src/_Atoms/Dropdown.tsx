@@ -9,7 +9,18 @@ const Dropdown: React.FC<{
   children: any
   refId: string
   className?: string
+
+  /** Attempt to set the minimum width of the dropdown to match the width of the element identified by refId */
   minWidth?: boolean
+  /** Attempt to set the maximum width of the dropdown to match the width of the element identified by refId */
+  maxWidth?: boolean
+
+  /** Specifies the maximum height of the dropdown in pixels. If not provided, the dropdown will expand 
+   * to fit the available space up to the bottom of the screen.
+   */
+  maxHeight?: number
+  /** Specifies the minimum height of the dropdown in pixels. */
+  minHeight?: number
   direction?: 'x' | 'y'
 }> = ({
   setIsOpen,
@@ -21,6 +32,9 @@ const Dropdown: React.FC<{
   refId,
   className,
   minWidth,
+  maxWidth = false,
+  maxHeight = null,
+  minHeight,
   direction = 'y',
 }) => {
   const [render, setRender] = useState(0)
@@ -45,6 +59,32 @@ const Dropdown: React.FC<{
     }
   }, [setIsOpen])
 
+  useEffect(() => {
+    const el = document.getElementById(refId)
+    if (!el) return
+
+    const handleResizeOrScroll = () => setRender((r) => r + 1)
+    const resizeObserver = new ResizeObserver(handleResizeOrScroll)
+
+    resizeObserver.observe(el)
+    window.addEventListener('resize', handleResizeOrScroll)
+
+    let parent: HTMLElement | null = el.parentElement
+    const scrollListeners: HTMLElement[] = []
+
+    while (parent) {
+      parent.addEventListener('scroll', handleResizeOrScroll)
+      scrollListeners.push(parent)
+      parent = parent.parentElement
+    }
+
+    return () => {
+      resizeObserver.disconnect()
+      window.removeEventListener('resize', handleResizeOrScroll)
+      scrollListeners.forEach((scrollEl) => scrollEl.removeEventListener('scroll', handleResizeOrScroll))
+    }
+  }, [refId])
+
   function tryFindFixedParent(el: HTMLElement): HTMLElement | null {
     let parentElement: HTMLElement | null = el.parentElement
     while (parentElement) {
@@ -63,10 +103,9 @@ const Dropdown: React.FC<{
     const el = document.getElementById(refId)
     if (!el) return undefined
     const tCheck = el.getBoundingClientRect().top + el.getBoundingClientRect().height
-    const t =
-      el.getBoundingClientRect().top + (direction == 'y' ? el.getBoundingClientRect().height : 0)
+    const t = el.getBoundingClientRect().top + (direction == 'y' ? el.getBoundingClientRect().height : 0)
 
-    const hThreshold = window.innerHeight * 0.8
+    const hThreshold = minHeight ? window.innerHeight - minHeight : window.innerHeight * 0.8;
     if (tCheck <= hThreshold) {
       const fixedParent: HTMLElement | null = tryFindFixedParent(el)
       if (fixedParent) {
@@ -77,13 +116,14 @@ const Dropdown: React.FC<{
       return undefined
     }
   }
+
   function getBottom(): number | undefined {
     const el = document.getElementById(refId)
     if (!el) return undefined
 
     const tCheck = el.getBoundingClientRect().top + el.getBoundingClientRect().height
     const t = el.getBoundingClientRect().top + el.getBoundingClientRect().height
-    const hThreshold = window.innerHeight * 0.8
+    const hThreshold = minHeight ? window.innerHeight - minHeight : window.innerHeight * 0.8;
     if (tCheck > hThreshold) {
       const fixedParent: HTMLElement | null = tryFindFixedParent(el)
       if (fixedParent) {
@@ -149,7 +189,8 @@ const Dropdown: React.FC<{
     if (!el) return 100
     const t = getTop()
     if (t) {
-      return window.innerHeight - t
+      const calculatedHeight = window.innerHeight - t
+      return maxHeight ? Math.min(calculatedHeight, maxHeight) : calculatedHeight
     } else {
       return el.getBoundingClientRect().y
     }
@@ -172,6 +213,7 @@ const Dropdown: React.FC<{
             e.preventDefault()
             setIsOpen(false)
           }}
+          aria-label="Close dropdown"
         ></button>
       )}
       <div className=''>
@@ -179,13 +221,15 @@ const Dropdown: React.FC<{
           style={{
             height: undefined,
             maxHeight: getHeight(),
+            minHeight: minHeight,
             minWidth: minWidth ? getWidth() : undefined,
+            maxWidth: maxWidth ? getWidth() : undefined,
             bottom: getBottom(),
             top: getTop(),
             left: getLeft(),
             right: getRight(),
           }}
-          className={`fixed z-50  shadow-lg shadow-bg14 dark:shadow-bg10dark  overflow-hidden 
+          className={`fixed z-50 shadow-lg shadow-bg14 dark:shadow-bg10dark overflow-hidden 
              flex flex-col justify-center items-center w-max ${className} border-0 bg-transparent border-pink-400`}
         >
           {children}

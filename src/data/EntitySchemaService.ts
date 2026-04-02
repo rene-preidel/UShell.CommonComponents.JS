@@ -255,18 +255,76 @@ export class EntitySchemaService {
     })
   }
 
-  static getHtmlInputType(propertyType: string) {
+  static convertToString(propertyType: string, value: any): string {
+    if (value === null || value === undefined) return '';
+    if (this.isAnyIntegerType(propertyType)) {
+      return value.toString();
+    }
+    if (propertyType.toLocaleLowerCase() === 'datetime') {
+      if (value instanceof Date) {
+        return value.toISOString().split('T')[0];
+      }
+      const parsedDate = new Date(value);
+      if (!isNaN(parsedDate.getTime())) {
+        return parsedDate.toISOString().split('T')[0];
+      }
+      return '';
+    }
+    return value;
+  }
+
+  static isBigIntType(propertyType: string) {
     switch (propertyType.toLocaleLowerCase()) {
-      case 'int':
-      case 'int16':
-      case 'int32':
-      case 'int64':
-      case 'float':
-      case 'decimal':
+      case 'bigint':
       case 'long':
+      case 'ulong':
+      case 'int64':
+      case 'uint64':
+        return true
+    }
+    return false
+  }
+
+  static isAnyIntegerType(propertyType: string) {
+    if (this.isBigIntType(propertyType)) return true
+    switch (propertyType.toLocaleLowerCase()) {
+      case 'sbyte':
+      case 'byte':
+      case 'short':
+      case 'int16':
+      case 'ushort':
+      case 'uint16':
+      case 'int':
+      case 'int32':
       case 'integer':
+      case 'uint':
+      case 'uint32':
+        return true
+    }
+    return false
+  }
+  
+  static isAnyFloatingPointType(propertyType: string) {
+    switch (propertyType.toLocaleLowerCase()) {
+      case 'float':
+      case 'single':
       case 'double':
-        return 'number'
+      case 'half':
+      case 'decimal':
+        return true
+    }
+    return false
+  }
+
+  static isAnyNumericType(propertyType: string) {
+    return this.isAnyIntegerType(propertyType) || this.isAnyFloatingPointType(propertyType)
+  }
+
+  static getHtmlInputType(propertyType: string) {
+    if (this.isAnyNumericType(propertyType)) {
+      return 'number';
+    }
+    switch (propertyType.toLocaleLowerCase()) {
       case 'datetime':
         return 'date'
       case 'bool':
@@ -355,6 +413,79 @@ export class EntitySchemaService {
     return result
   }
 
+  static parseToFieldType(fieldType: string, value: any): any {
+    if (value === null || value === undefined) return null;
+    if (EntitySchemaService.isBigIntType(fieldType)) {
+      try {
+        return BigInt(value);
+      } catch (error) {
+        console.error(`Failed to parse value to BigInt: ${value}`, error);
+        return null;
+      }
+    } else if (EntitySchemaService.isAnyIntegerType(fieldType)) {
+      return Number.parseInt(value);
+    } else if (EntitySchemaService.isAnyFloatingPointType(fieldType)) {
+      return Number.parseFloat(value);
+    } else {
+      switch (fieldType.toLocaleLowerCase()) {
+        case 'bool':
+        case 'boolean':
+          if (typeof value === 'string') {
+            return value.toLocaleLowerCase() === 'true' || value === '1';
+          } else if (typeof value === 'number') {
+            return value === 1;
+          } else if (typeof value === 'boolean') {
+            return value;
+          } else {
+            return false;
+          }
+        // ToDo_Rep: vermutlich bei weitem nicht robust genug
+        case 'datetime':
+            return new Date(value);
+        case 'string':
+        default:
+          return value;
+      }
+    }
+  }
+
+  static getDefaultValueForType(fieldType: string, required: boolean): any {
+    if (!required) return null;
+
+    if (EntitySchemaService.isAnyNumericType(fieldType)) {
+      return 0;
+    } else {
+      switch (fieldType.toLocaleLowerCase()) {
+        case 'bool':
+        case 'boolean':
+          return false;
+        case 'datetime':
+            return new Date('1900-01-01T00:00:00Z');
+        case 'string':
+        default:
+          return '';
+      }
+    }
+  }
+
+  /**
+   * Compares two values based on their field type.
+   * The given values are assumed to be already parsed to their correct types.
+   * @param fieldType used fieldType for comparison, e.g. 'datetime', 'int', etc.
+   * @param v1 first value
+   * @param v2 second value
+   * @returns true if values are equal, false otherwise
+   */
+  static equals(fieldType: string, v1: any, v2: any): boolean {
+    if (v1 === v2) return true; // early exit if we have two invalid dates
+    if (fieldType.toLowerCase() === 'datetime') {
+      const d1: Date = new Date(v1)
+      const d2: Date = new Date(v2)
+      return d1.getTime() === d2.getTime()
+    }
+    return false;
+  }
+
   static createNewEntity(entitySchema: EntitySchema) {
     const result: any = {}
     const keyProps: string[] = EntitySchemaService.getPrimaryKeyProps(entitySchema)
@@ -366,32 +497,13 @@ export class EntitySchemaService {
         result[fn.name] = crypto.randomUUID()
       } else {
         if (fn.defaultValue) {
-          result[fn.name] = fn.defaultValue
-        } else if (fn.required) {
-          switch (fn.type.toLocaleLowerCase()) {
-            case 'int32':
-            case 'int64':
-            case 'float':
-            case 'decimal':
-              result[fn.name] = 0
-              break
-            case 'bool':
-            case 'boolean':
-              result[fn.name] = false
-              break
-            case 'datetime':
-              result[fn.name] = new Date(1900, 1, 1)
-              break
-            case 'string':
-            default:
-              result[fn.name] = ''
-          }
+          result[fn.name] = EntitySchemaService.parseToFieldType(fn.type, fn.defaultValue);
         } else {
-          result[fn.name] = null
+          // Default Values for non-nullable (required) fields:
+          result[fn.name] = EntitySchemaService.getDefaultValueForType(fn.type, fn.required);
         }
       }
     }
-    console.debug('creating new Entity', result)
     return result
   }
 
@@ -412,9 +524,14 @@ export class EntitySchemaService {
         return null
       }
     }
-    const isNumber = ['int32', 'int64', 'decimal', 'float', 'long', 'int', 'integer'].includes(
+    const isNumber = ['int16', 'short', 'int32', 'int64', 'decimal', 'float', 'long', 'int', 'integer'].includes(
       inputType.toLocaleLowerCase(),
     )
+
+    const isFloatingPointNumber = ['decimal', 'float', 'double'].includes(
+      inputType.toLocaleLowerCase(),
+    )
+
     if (required && isNumber) {
       if (v == null || v == undefined || Number.isNaN(v)) {
         console.log('v == null', v == null)
@@ -425,6 +542,41 @@ export class EntitySchemaService {
         return 'Field is required'
       } else {
         return null
+      }
+    }
+
+    // integer check
+    if (isNumber && !isFloatingPointNumber && v !== null && v !== undefined && v !== '') {
+      if (!Number.isInteger(Number.parseFloat(v)) || String(v).includes('.')) {
+        return 'Value must be an integer';
+      }
+    }
+
+    // int16 range
+    if (inputType === 'int16' || inputType === 'short') {
+      if (Number.parseInt(v) > 32767 || Number.parseInt(v) < -32768) {
+        return 'Value must be between -32,768 and 32,767';
+      }
+    }
+
+    // int32 range
+    if (inputType === 'int32' || inputType === 'int' || inputType === 'integer') {
+      if (Number.parseInt(v) > 2147483647 || Number.parseInt(v) < -2147483648) {
+        return 'Value must be between -2,147,483,648 and 2,147,483,647';
+      }
+    }
+
+    // int64 range
+    if ((inputType === 'int64' || inputType === 'long') && (required || (v !== null && v !== undefined && v !== ''))) {
+      try{
+        const valAsBigInt = BigInt(v);
+        const int64Min = BigInt('-9223372036854775808');
+        const int64Max = BigInt('9223372036854775807');
+        if (valAsBigInt < int64Min || valAsBigInt > int64Max) {
+          return 'Value must be between -9,223,372,036,854,775,808 and 9,223,372,036,854,775,807';
+        }
+      } catch (error) {
+        return 'Value must be a valid integer number';
       }
     }
 

@@ -1,6 +1,6 @@
 import React from 'react'
 
-const MagnifyingGlassIcon = () => {
+const MagnifyingGlassIcon: React.FC<{ className?: string, size?: number }> = ({ className, size = 6 }) => {
   return (
     <svg
       xmlns='http://www.w3.org/2000/svg'
@@ -8,7 +8,7 @@ const MagnifyingGlassIcon = () => {
       viewBox='0 0 24 24'
       strokeWidth={1.5}
       stroke='currentColor'
-      className='size-6'
+      className={`size-${size}` + (className ? ' ' + className : '')}
     >
       <path
         strokeLinecap='round'

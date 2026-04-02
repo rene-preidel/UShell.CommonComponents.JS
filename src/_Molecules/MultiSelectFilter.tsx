@@ -10,10 +10,11 @@ const MultiSelectFilter: React.FC<{
   onFilterChanged: (filter: LogicalExpression | null) => void
   initialValues: any[]
 }> = ({ options, onFilterChanged, initialValues, column }) => {
-  const [selectedValues, setSelectedValues] = useState<any[]>([])
+  const [selectedValues, setSelectedValues] = useState<any[]>(initialValues)
 
   function onSelectionChanged(sv: any[] | null) {
     if (!sv) {
+      setSelectedValues([]);
       onFilterChanged(null)
       return
     }
@@ -34,7 +35,7 @@ const MultiSelectFilter: React.FC<{
   return (
     <div className='flex flex-col'>
       <MultiSelect
-        initialValues={initialValues}
+        initialValues={selectedValues}
         options={options}
         onSelectionChange={(sv: any[]) => setSelectedValues(sv)}
       ></MultiSelect>

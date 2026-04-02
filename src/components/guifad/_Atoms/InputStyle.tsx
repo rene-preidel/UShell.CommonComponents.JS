@@ -12,7 +12,8 @@ const InputStyle: React.FC<{
   classNameHoverBg?: string
   classNameHoverBgDark?: string
   styleType?: number
-  hasErrors: boolean
+  hasErrors: boolean,
+  placeholder?: string
 }> = ({
   currentValue,
   setCurrentValue,
@@ -24,6 +25,7 @@ const InputStyle: React.FC<{
   classNameHoverBgDark,
   styleType = 0,
   hasErrors,
+  placeholder,
 }) => {
   const className: string = getInputStyleClassName(
     styleType,
@@ -43,6 +45,7 @@ const InputStyle: React.FC<{
         onValueChange(e.target.value)
         setCurrentValue(e.target.value)
       }}
+      placeholder={placeholder}
     ></input>
   )
 }

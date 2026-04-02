@@ -12,7 +12,8 @@ const GuidInputField: React.FC<{
   classNameHoverBg?: string
   classNameHoverBgDark?: string
   styleType?: number
-  hasErrors: boolean
+  hasErrors: boolean,
+  placeholder?: string
 }> = ({
   initialValue,
   currentValue,
@@ -24,6 +25,7 @@ const GuidInputField: React.FC<{
   classNameHoverBgDark,
   styleType = 0,
   hasErrors,
+  placeholder,
 }) => {
   function generateGuid() {
     const guid = crypto.randomUUID()
@@ -45,6 +47,7 @@ const GuidInputField: React.FC<{
         classNameHoverBgDark={classNameHoverBgDark}
         styleType={styleType}
         hasErrors={hasErrors}
+        placeholder={placeholder}
       ></InputStyle>
       {!disabled && (
         <button
